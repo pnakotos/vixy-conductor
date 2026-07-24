@@ -1,0 +1,6 @@
+{
+  "name": "Vixy Driver",
+  "description": "Aplicación oficial para conductores Vixy Driver con mapa en vivo, gestión de viajes (Moto, Taxi, Delivery), verificación de documentos legales venezolanos (RCV, Licencia, Certificado Médico), cartera de saldo, soporte a Pago Móvil, Zinli, Binance y PayPal, botón de pánico y soporte.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
