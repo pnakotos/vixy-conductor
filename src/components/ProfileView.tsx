@@ -25,11 +25,13 @@ import {
 interface ProfileViewProps {
   profile: DriverProfile;
   onUpdateProfile: (updated: DriverProfile) => void;
+  onOpenPresentationCard?: () => void;
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({
   profile,
   onUpdateProfile,
+  onOpenPresentationCard,
 }) => {
   const [selectedDocForUpload, setSelectedDocForUpload] = useState<DriverDocument | null>(null);
   const [uploadFile, setUploadFile] = useState<string | null>(null);
@@ -157,12 +159,23 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 ) : (
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-black text-white text-base tracking-wider">{profile.plateNumber}</span>
-                    <button onClick={() => setIsEditingPlate(true)} className="text-purple-400 hover:text-purple-300">
+                    <button onClick={() => setIsEditingPlate(true)} className="text-purple-400 hover:text-purple-300" title="Editar Placa">
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 )}
               </div>
+
+              {onOpenPresentationCard && (
+                <button
+                  onClick={onOpenPresentationCard}
+                  className="bg-purple-900/80 hover:bg-purple-800 text-purple-200 border border-purple-600/80 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md active:scale-95"
+                  title="Ver Tarjeta Digital de Presentación Vixy Driver"
+                >
+                  <IdCard className="w-4 h-4 text-purple-300" />
+                  <span>Ver Tarjeta de Presentación / Placa</span>
+                </button>
+              )}
 
               <div className="text-xs text-zinc-400">
                 Calificación: <strong className="text-amber-400 font-mono">★ {profile.rating}</strong> ({profile.totalTrips} viajes)

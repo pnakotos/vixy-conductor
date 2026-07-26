@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "Driver": {
+      "title": "Driver Profile",
+      "description": "Driver account and status",
+      "type": "object",
+      "properties": {
+        "cedula": { "type": "string", "maxLength": 30 },
+        "fullName": { "type": "string", "maxLength": 100 },
+        "plateNumber": { "type": "string", "maxLength": 20 },
+        "vehicleModel": { "type": "string", "maxLength": 80 },
+        "vehicleColor": { "type": "string", "maxLength": 40 },
+        "isActiveOnline": { "type": "boolean" },
+        "isApproved": { "type": "boolean" },
+        "walletBalanceUsd": { "type": "number" },
+        "rating": { "type": "number" },
+        "totalTrips": { "type": "number" }
+      },
+      "required": ["cedula", "fullName", "plateNumber"]
+    },
+    "Trip": {
+      "title": "Trip Service",
+      "description": "Passenger trip request and lifecycle",
+      "type": "object",
+      "properties": {
+        "driverId": { "type": "string", "maxLength": 128 },
+        "passengerName": { "type": "string", "maxLength": 100 },
+        "pickupLocation": { "type": "string", "maxLength": 200 },
+        "dropoffLocation": { "type": "string", "maxLength": 200 },
+        "fareUsd": { "type": "number" },
+        "fareVes": { "type": "number" },
+        "commissionFeeUsd": { "type": "number" },
+        "paymentMethod": { "type": "string", "maxLength": 30 },
+        "status": { "type": "string", "maxLength": 30 },
+        "createdAt": { "type": "string", "maxLength": 60 }
+      },
+      "required": ["passengerName", "pickupLocation", "dropoffLocation", "fareUsd", "status"]
+    },
+    "Transaction": {
+      "title": "Wallet Transaction",
+      "description": "Recharges and commission ledger items",
+      "type": "object",
+      "properties": {
+        "driverId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "maxLength": 30 },
+        "amountUsd": { "type": "number" },
+        "amountVes": { "type": "number" },
+        "method": { "type": "string", "maxLength": 50 },
+        "referenceNumber": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "maxLength": 30 },
+        "date": { "type": "string", "maxLength": 60 }
+      },
+      "required": ["type", "amountUsd", "status"]
+    }
+  },
+  "firestore": {
+    "/drivers/{driverId}": {
+      "schema": { "$ref": "#/entities/Driver" },
+      "description": "Driver profile collection"
+    },
+    "/trips/{tripId}": {
+      "schema": { "$ref": "#/entities/Trip" },
+      "description": "Trip services collection"
+    },
+    "/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "Wallet transactions collection"
+    }
+  }
+}

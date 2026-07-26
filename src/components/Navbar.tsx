@@ -12,7 +12,8 @@ import {
   AlertTriangle,
   IdCard,
   LogOut,
-  Palette
+  Palette,
+  Globe
 } from 'lucide-react';
 import { AppTheme } from '../data/themes';
 
@@ -25,6 +26,7 @@ interface NavbarProps {
   onOpenPresentationCard: () => void;
   onLogout: () => void;
   onOpenThemeModal?: () => void;
+  onOpenAdminModal?: () => void;
   currentTheme?: AppTheme;
 }
 
@@ -37,6 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenPresentationCard,
   onLogout,
   onOpenThemeModal,
+  onOpenAdminModal,
   currentTheme,
 }) => {
   const isDetenido = balance < -0.50;
@@ -76,18 +79,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Right Action Controls Row */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             
-            {/* Theme Selector Button */}
-            {onOpenThemeModal && (
-              <button
-                onClick={onOpenThemeModal}
-                title="Elegir entre 10 temas visuales de diseño"
-                className="flex items-center gap-1.5 bg-gradient-to-r from-purple-950 to-indigo-950 hover:from-purple-900 hover:to-indigo-900 text-purple-200 border border-purple-700/80 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 shrink-0"
-              >
-                <Palette className="w-3.5 h-3.5 text-fuchsia-400 animate-bounce" />
-                <span className="text-xs">Diseño (10)</span>
-              </button>
-            )}
-
             {/* Quick Wallet Balance Button */}
             <button 
               onClick={() => onTabChange('wallet')}
@@ -128,19 +119,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                       ? 'EN LÍNEA'
                       : 'CONECTAR'}
               </span>
-            </button>
-
-            {/* Driver Presentation Card Button (Boton Tarjeta / Placa) */}
-            <button
-              onClick={onOpenPresentationCard}
-              title="Tarjeta de Presentación del Conductor"
-              className="flex items-center gap-1 bg-zinc-900 hover:bg-zinc-800 text-purple-300 border border-purple-800/80 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0"
-            >
-              <IdCard className="w-4 h-4 text-purple-400 shrink-0" />
-              <span className="hidden sm:inline text-xs font-mono font-bold">
-                {profile.plateNumber}
-              </span>
-              <span className="sm:hidden text-[11px] font-bold">Tarjeta</span>
             </button>
 
             {/* Logout Icon Button */}

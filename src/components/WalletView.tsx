@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DriverProfile, PaymentGatewayInfo, WalletTransaction } from '../types';
 import { PAYMENT_GATEWAYS, OFFICIAL_BCV_RATE } from '../data/mockData';
+import { submitRechargeToAdmin } from '../services/adminIntegrationService';
 import { 
   Wallet, 
   ArrowUpRight, 
@@ -128,6 +129,7 @@ export const WalletView: React.FC<WalletViewProps> = ({
       };
 
       onAddTransaction(newTx);
+      submitRechargeToAdmin(newTx); // Transmit to https://vhixy.site/
       setSuccessMsg(`¡Recarga de $${finalUsd.toFixed(2)} USD (~${finalVes.toFixed(2)} BS) procesada e ingresada a tu saldo exitosamente!`);
       
       // Close modal after 2.5s

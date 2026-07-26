@@ -27,6 +27,10 @@ import { SupportView } from './components/SupportView';
 import { FaqView } from './components/FaqView';
 import { LoginModal } from './components/LoginModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
+import { AdminInterconnectionModal } from './components/AdminInterconnectionModal';
+import { syncDriverProfileToAdmin, syncTripLedgerToAdmin } from './services/adminIntegrationService';
+import { testFirebaseConnection } from './lib/firebase';
+import { syncDriverProfileToFirebase, syncTripToFirebase, syncTransactionToFirebase } from './services/firebaseSyncService';
 
 export default function App() {
   // Core App State
@@ -51,13 +55,22 @@ export default function App() {
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [completedTripForRating, setCompletedTripForRating] = useState<TripService | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
   const isDetenido = balanceUsd < MIN_BALANCE_THRESHOLD;
+
+  // Boot Firebase connection test & initial sync
+  useEffect(() => {
+    testFirebaseConnection();
+    syncDriverProfileToFirebase(profile);
+  }, []);
 
   // Auto-enforce "Estado Detenido" if balance drops below -$0.50
   useEffect(() => {
     if (isDetenido && profile.isActiveOnline) {
-      setProfile((prev) => ({ ...prev, isActiveOnline: false, isSuspendedByBalance: true }));
+      const updated = { ...profile, isActiveOnline: false, isSuspendedByBalance: true };
+      setProfile(updated);
+      syncDriverProfileToFirebase(updated);
       if (activeTrip) {
         alert('ADVERTENCIA: Tu saldo ha caído por debajo de -$0.50 USD. Estás en Estado Detenido.');
       }
@@ -93,7 +106,11 @@ export default function App() {
       return;
     }
 
-    setProfile((prev) => ({ ...prev, isActiveOnline: !prev.isActiveOnline }));
+    const updatedOnline = !profile.isActiveOnline;
+    const updatedProfile = { ...profile, isActiveOnline: updatedOnline };
+    setProfile(updatedProfile);
+    syncDriverProfileToAdmin(updatedProfile); // Transmit to https://vhixy.site/
+    syncDriverProfileToFirebase(updatedProfile); // Sync to Firebase Firestore
   };
 
   // Accept incoming trip offer
@@ -173,6 +190,13 @@ export default function App() {
 
     setTransactions((prev) => [newTx, ...prev]);
 
+    // Transmit trip ledger and 10% commission entry to https://vhixy.site/
+    syncTripLedgerToAdmin(activeTrip);
+
+    // Sync trip and commission transaction to Firebase Firestore
+    syncTripToFirebase(activeTrip);
+    syncTransactionToFirebase(newTx);
+
     // Open rating modal
     setCompletedTripForRating(activeTrip);
     setIsRatingModalOpen(true);
@@ -183,17 +207,22 @@ export default function App() {
   const handleSubmitPassengerRating = (rating: number, feedback: string) => {
     setIsRatingModalOpen(false);
     setCompletedTripForRating(null);
-    setProfile((prev) => ({ ...prev, totalTrips: prev.totalTrips + 1 }));
+    const updated = { ...profile, totalTrips: profile.totalTrips + 1 };
+    setProfile(updated);
+    syncDriverProfileToFirebase(updated);
   };
 
   // Wallet recharge transaction
   const handleAddTransaction = (tx: WalletTransaction) => {
     setTransactions((prev) => [tx, ...prev]);
     setBalanceUsd((prev) => prev + tx.amountUsd);
+    syncTransactionToFirebase(tx);
 
     // If new user, set initial recharge true
     if (!profile.hasInitialRecharge) {
-      setProfile((prev) => ({ ...prev, hasInitialRecharge: true }));
+      const updated = { ...profile, hasInitialRecharge: true };
+      setProfile(updated);
+      syncDriverProfileToFirebase(updated);
     }
   };
 
@@ -217,6 +246,7 @@ export default function App() {
         onOpenPresentationCard={() => setIsPresentationCardOpen(true)}
         onLogout={() => setIsLoginModalOpen(true)}
         onOpenThemeModal={() => setIsThemeModalOpen(true)}
+        onOpenAdminModal={() => setIsAdminModalOpen(true)}
         currentTheme={currentTheme}
       />
 
@@ -304,7 +334,11 @@ export default function App() {
         {currentTab === 'profile' && (
           <ProfileView
             profile={profile}
-            onUpdateProfile={setProfile}
+            onUpdateProfile={(updated) => {
+              setProfile(updated);
+              syncDriverProfileToFirebase(updated);
+            }}
+            onOpenPresentationCard={() => setIsPresentationCardOpen(true)}
           />
         )}
 
@@ -364,6 +398,13 @@ export default function App() {
         onClose={() => setIsThemeModalOpen(false)}
         currentThemeId={currentThemeId}
         onSelectTheme={setCurrentThemeId}
+      />
+
+      {/* Central Admin Platform Interconnection Modal (https://vhixy.site/) */}
+      <AdminInterconnectionModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        profile={profile}
       />
 
     </div>
