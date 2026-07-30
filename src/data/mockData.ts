@@ -7,29 +7,29 @@ export const MIN_INITIAL_RECHARGE_USD = 5.00; // Recarga minima obligatoria para
 
 export const INITIAL_DRIVER_PROFILE: DriverProfile = {
   id: 'DRV-78902',
-  fullName: 'Carlos Eduardo Mendoza',
-  cedula: 'V-20.145.890',
-  phone: '+58 412-9882233',
-  email: 'carlos.mendoza.vixy@gmail.com',
+  fullName: 'Conductor Registrado',
+  cedula: 'V-00.000.000',
+  phone: '+58 412-0000000',
+  email: 'conductor.vixy@gmail.com',
   profilePhotoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
   plateNumber: 'AB1C23D', // Número de Placa obligatorio
-  rating: 4.94,
-  totalTrips: 182,
-  acceptanceRate: 98,
+  rating: 5.0,
+  totalTrips: 0,
+  acceptanceRate: 100,
   servicesOffered: ['moto', 'taxi', 'delivery'],
   city: 'Caracas, Distrito Capital',
   isVerifiedByVixy: true,
   isApproved: true,
   isActiveOnline: false,
   isSuspendedByBalance: false,
-  hasInitialRecharge: true,
+  hasInitialRecharge: false,
   vehicles: {
     moto: {
       type: 'moto',
       brand: 'Bera',
       model: 'SBR 150',
       year: 2024,
-      color: 'Azul Oscuro',
+      color: 'Negro',
       plateNumber: 'AB1C23D',
       photoUrl: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&q=80&w=600',
       hasHelmet: true,
@@ -38,18 +38,18 @@ export const INITIAL_DRIVER_PROFILE: DriverProfile = {
       type: 'taxi',
       brand: 'Chevrolet',
       model: 'Aveo LT',
-      year: 2012,
+      year: 2014,
       color: 'Gris Plata',
-      plateNumber: 'A88BX9Z',
+      plateNumber: 'AB1C23D',
       photoUrl: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=600',
       seatsCount: 4,
     },
     delivery: {
       type: 'delivery',
       brand: 'Bera',
-      model: 'SBR 150 (Delivery)',
+      model: 'SBR 150',
       year: 2024,
-      color: 'Negro Mate',
+      color: 'Negro',
       plateNumber: 'AB1C23D',
       photoUrl: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&q=80&w=600',
       hasThermalBag: true,
@@ -71,7 +71,7 @@ export const INITIAL_DRIVER_PROFILE: DriverProfile = {
       legalBasis: 'Art. 63 Ley de Tránsito Terrestre (2da Grado Moto / 3ra Carro)',
       status: 'approved',
       degree: '3ra Grado (Vehículos hasta 9 puestos)',
-      documentNumber: 'LIC-20145890-VZLA',
+      documentNumber: 'LIC-INTT-VZLA',
       expiryDate: '2028-11-15',
       url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600',
       requiredFor: ['moto', 'taxi', 'delivery'],
@@ -82,7 +82,7 @@ export const INITIAL_DRIVER_PROFILE: DriverProfile = {
       name: 'Certificado Médico de Salud Integral',
       legalBasis: 'Art. 64 Ley de Tránsito Terrestre - Aptitud física para conducir',
       status: 'approved',
-      documentNumber: 'CMSI-89201-DF',
+      documentNumber: 'CMSI-SALUD-DF',
       expiryDate: '2027-05-20',
       url: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=600',
       requiredFor: ['moto', 'taxi', 'delivery'],
@@ -93,7 +93,7 @@ export const INITIAL_DRIVER_PROFILE: DriverProfile = {
       name: 'Responsabilidad Civil de Vehículos (RCV)',
       legalBasis: 'Art. 58 Ley de Tránsito Terrestre - Póliza de Seguro Obligatorio',
       status: 'approved',
-      policyNumber: 'RCV-POL-992018-CARACAS',
+      policyNumber: 'RCV-POL-SEGUROS-VZLA',
       expiryDate: '2027-01-10',
       url: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=600',
       requiredFor: ['moto', 'taxi', 'delivery'],
@@ -104,13 +104,77 @@ export const INITIAL_DRIVER_PROFILE: DriverProfile = {
       name: 'Cédula de Identidad Venezolana',
       legalBasis: 'Art. 16 Ley Orgánica de Identificación',
       status: 'approved',
-      documentNumber: 'V-20.145.890',
+      documentNumber: 'V-00.000.000',
       url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=600',
       requiredFor: ['moto', 'taxi', 'delivery'],
       notes: 'Documento original laminado V- o E- vigentes.',
     },
   ],
 };
+
+export function createNewDriverProfile(data: {
+  fullName: string;
+  cedula: string;
+  phone: string;
+  email?: string;
+  plateNumber: string;
+  vehicleModel?: string;
+  city?: string;
+  servicesOffered: ('moto' | 'taxi' | 'delivery')[];
+}): DriverProfile {
+  const formattedCedula = data.cedula.toUpperCase().startsWith('V-') || data.cedula.toUpperCase().startsWith('E-')
+    ? data.cedula.toUpperCase()
+    : `V-${data.cedula.trim()}`;
+
+  const cleanPlate = data.plateNumber.toUpperCase().trim();
+
+  return {
+    ...INITIAL_DRIVER_PROFILE,
+    id: `DRV-${Math.floor(100000 + Math.random() * 900000)}`,
+    fullName: data.fullName.trim(),
+    cedula: formattedCedula,
+    phone: data.phone.trim() || '+58 412-0000000',
+    email: data.email?.trim() || `${formattedCedula.replace(/\D/g, '')}@vixydriver.app`,
+    plateNumber: cleanPlate,
+    city: data.city || 'Caracas, Distrito Capital',
+    servicesOffered: data.servicesOffered.length > 0 ? data.servicesOffered : ['taxi'],
+    hasInitialRecharge: false,
+    rating: 5.0,
+    totalTrips: 0,
+    vehicles: {
+      moto: {
+        type: 'moto',
+        brand: data.vehicleModel?.split(' ')[0] || 'Bera',
+        model: data.vehicleModel || 'SBR 150',
+        year: 2024,
+        color: 'Negro',
+        plateNumber: cleanPlate,
+        photoUrl: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&q=80&w=600',
+        hasHelmet: true,
+      },
+      taxi: {
+        type: 'taxi',
+        brand: data.vehicleModel?.split(' ')[0] || 'Chevrolet',
+        model: data.vehicleModel || 'Particular',
+        year: 2014,
+        color: 'Gris Plata',
+        plateNumber: cleanPlate,
+        photoUrl: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=600',
+        seatsCount: 4,
+      },
+      delivery: {
+        type: 'delivery',
+        brand: data.vehicleModel?.split(' ')[0] || 'Bera',
+        model: data.vehicleModel || 'SBR 150',
+        year: 2024,
+        color: 'Negro',
+        plateNumber: cleanPlate,
+        photoUrl: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&q=80&w=600',
+        hasThermalBag: true,
+      }
+    }
+  };
+}
 
 export const INITIAL_WALLET_TRANSACTIONS: WalletTransaction[] = [
   {

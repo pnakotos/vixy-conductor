@@ -33,9 +33,30 @@ import { testFirebaseConnection } from './lib/firebase';
 import { syncDriverProfileToFirebase, syncTripToFirebase, syncTransactionToFirebase } from './services/firebaseSyncService';
 
 export default function App() {
-  // Core App State
-  const [profile, setProfile] = useState<DriverProfile>(INITIAL_DRIVER_PROFILE);
-  const [balanceUsd, setBalanceUsd] = useState<number>(8.70);
+  // Core App State (Persisted in LocalStorage / Firebase)
+  const [profile, setProfile] = useState<DriverProfile>(() => {
+    const saved = localStorage.getItem('vixy_driver_profile');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error parsing stored profile:', e);
+      }
+    }
+    return INITIAL_DRIVER_PROFILE;
+  });
+
+  const [balanceUsd, setBalanceUsd] = useState<number>(() => {
+    const savedProfile = localStorage.getItem('vixy_driver_profile');
+    if (savedProfile) {
+      try {
+        const parsed = JSON.parse(savedProfile);
+        return parsed.hasInitialRecharge ? 10.00 : 0.00;
+      } catch (e) {}
+    }
+    return 0.00;
+  });
+
   const [transactions, setTransactions] = useState<WalletTransaction[]>(INITIAL_WALLET_TRANSACTIONS);
   const [currentTab, setCurrentTab] = useState<TabType>('map');
   
@@ -54,7 +75,12 @@ export default function App() {
   const [isPanicModalOpen, setIsPanicModalOpen] = useState(false);
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [completedTripForRating, setCompletedTripForRating] = useState<TripService | null>(null);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  
+  // Open login/register modal automatically if no user is saved in localStorage
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(() => {
+    return !localStorage.getItem('vixy_driver_profile');
+  });
+  
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
   const isDetenido = balanceUsd < MIN_BALANCE_THRESHOLD;
@@ -62,7 +88,9 @@ export default function App() {
   // Boot Firebase connection test & initial sync
   useEffect(() => {
     testFirebaseConnection();
-    syncDriverProfileToFirebase(profile);
+    if (profile.cedula && profile.cedula !== 'V-00.000.000') {
+      syncDriverProfileToFirebase(profile);
+    }
   }, []);
 
   // Auto-enforce "Estado Detenido" if balance drops below -$0.50
@@ -229,8 +257,16 @@ export default function App() {
   // Account login/logout switcher
   const handleLoginSuccess = (newProfile: DriverProfile) => {
     setProfile(newProfile);
+    localStorage.setItem('vixy_driver_profile', JSON.stringify(newProfile));
     setIsLoginModalOpen(false);
     setBalanceUsd(newProfile.hasInitialRecharge ? 10.00 : 0.00);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('vixy_driver_profile');
+    setProfile(INITIAL_DRIVER_PROFILE);
+    setBalanceUsd(0.00);
+    setIsLoginModalOpen(true);
   };
 
   return (
@@ -244,7 +280,7 @@ export default function App() {
         onTabChange={setCurrentTab}
         onToggleOnline={handleToggleOnline}
         onOpenPresentationCard={() => setIsPresentationCardOpen(true)}
-        onLogout={() => setIsLoginModalOpen(true)}
+        onLogout={handleLogout}
         onOpenThemeModal={() => setIsThemeModalOpen(true)}
         onOpenAdminModal={() => setIsAdminModalOpen(true)}
         currentTheme={currentTheme}
