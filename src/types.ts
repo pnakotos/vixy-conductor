@@ -81,6 +81,9 @@ export interface PassengerInfo {
   rating: number;
   phone: string;
   totalTrips: number;
+  isUniversityStudent?: boolean;
+  universityName?: string;
+  studentCardId?: string;
 }
 
 export interface TripService {
@@ -88,6 +91,9 @@ export interface TripService {
   serviceType: ServiceType;
   serviceName: string; // "Vixy Moto Rapidito", "Vixy Taxi Confort", "Vixy Delivery Express"
   passenger: PassengerInfo;
+  isUniversityTariff?: boolean;
+  universityTariffDiscountUsd?: number;
+  universityTariffNote?: string;
   pickupLocation: {
     address: string;
     cityArea: string;

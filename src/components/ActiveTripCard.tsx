@@ -14,7 +14,8 @@ import {
   ShieldCheck,
   Bike,
   Car,
-  Package
+  Package,
+  GraduationCap
 } from 'lucide-react';
 
 interface ActiveTripCardProps {
@@ -104,6 +105,19 @@ export const ActiveTripCard: React.FC<ActiveTripCardProps> = ({
           INTT ✓
         </span>
       </div>
+
+      {/* University Tariff Student Banner */}
+      {(trip.isUniversityTariff || trip.passenger.isUniversityStudent) && (
+        <div className="bg-gradient-to-r from-blue-950 via-indigo-950 to-purple-950 border border-blue-500/80 rounded-xl p-2.5 text-xs text-blue-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-4 h-4 text-sky-300 shrink-0" />
+            <span><strong>🎓 Tarifa Universitaria (50% Desc.):</strong> Estudiante {trip.passenger.universityName || 'Universidad Nacional'}. Solicitar carnet si aplica.</span>
+          </div>
+          <span className="text-[10px] bg-blue-900 px-2 py-0.5 rounded font-mono text-sky-200 font-bold shrink-0">
+            UCV / LUZ
+          </span>
+        </div>
+      )}
 
       {/* Header with Panic & Cancel Buttons */}
       <div className="flex items-center justify-between gap-2 border-b border-zinc-800 pb-3">

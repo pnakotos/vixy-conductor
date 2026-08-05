@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { TripService } from '../types';
-import { Star, MapPin, Navigation, DollarSign, Percent, ArrowRight, Bike, Car, Package, Clock, ShieldCheck } from 'lucide-react';
+import { Star, MapPin, Navigation, DollarSign, Percent, ArrowRight, Bike, Car, Package, Clock, ShieldCheck, GraduationCap } from 'lucide-react';
 
 interface IncomingTripModalProps {
   trip: TripService | null;
@@ -88,6 +88,28 @@ export const IncomingTripModal: React.FC<IncomingTripModalProps> = ({
 
         {/* Route Details */}
         <div className="p-4 space-y-3">
+          
+          {/* Tarifa Universitaria Notification Banner if Student */}
+          {(trip.isUniversityTariff || trip.passenger.isUniversityStudent) && (
+            <div className="bg-gradient-to-r from-blue-950 via-indigo-950 to-purple-950 border-2 border-blue-500/70 rounded-xl p-3 text-xs text-blue-100 flex items-start gap-2.5 shadow-md">
+              <div className="p-1.5 bg-blue-600 rounded-lg text-white shrink-0 mt-0.5">
+                <GraduationCap className="w-4 h-4" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5 font-black text-sky-300 text-[11px] uppercase tracking-wider">
+                  <span>🎓 Tarifa Universitaria Aplicada</span>
+                  <span className="bg-sky-500 text-black text-[9px] font-extrabold px-1.5 py-0.2 rounded font-mono">50% DESC</span>
+                </div>
+                <p className="text-zinc-200 text-[11px] leading-tight">
+                  Pasajero Estudiante: <strong>{trip.passenger.universityName || 'Universidad Nacional'}</strong> ({trip.passenger.studentCardId || 'Carnet Verificado'}).
+                </p>
+                <p className="text-sky-200/80 text-[10px] italic">
+                  *Comisión Vixy protegida al 10%. Solicitar Carnet Estudiantil al abordar.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2 text-xs">
             {/* Pickup */}
             <div className="flex items-start gap-2.5">

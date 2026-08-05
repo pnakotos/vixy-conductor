@@ -13,7 +13,8 @@ import {
   IdCard,
   LogOut,
   Palette,
-  Globe
+  Globe,
+  GraduationCap
 } from 'lucide-react';
 import { AppTheme } from '../data/themes';
 
@@ -27,6 +28,7 @@ interface NavbarProps {
   onLogout: () => void;
   onOpenThemeModal?: () => void;
   onOpenAdminModal?: () => void;
+  onOpenUniversityModal?: () => void;
   currentTheme?: AppTheme;
 }
 
@@ -40,6 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   onOpenThemeModal,
   onOpenAdminModal,
+  onOpenUniversityModal,
   currentTheme,
 }) => {
   const isDetenido = balance < -0.50;
@@ -79,6 +82,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Right Action Controls Row */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             
+            {/* Tarifa Universitaria Notification Button */}
+            {onOpenUniversityModal && (
+              <button
+                onClick={onOpenUniversityModal}
+                title="Notificación y Lineamientos Tarifa Universitaria"
+                className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-bold bg-blue-950/80 hover:bg-blue-900/90 text-sky-200 border border-blue-700/80 transition-all shadow-md active:scale-95 shrink-0"
+              >
+                <GraduationCap className="w-3.5 h-3.5 text-sky-300" />
+                <span className="hidden sm:inline font-semibold">Tarifa Univ.</span>
+              </button>
+            )}
+
             {/* Quick Wallet Balance Button */}
             <button 
               onClick={() => onTabChange('wallet')}

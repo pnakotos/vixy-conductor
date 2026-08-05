@@ -28,6 +28,7 @@ import { FaqView } from './components/FaqView';
 import { LoginModal } from './components/LoginModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { AdminInterconnectionModal } from './components/AdminInterconnectionModal';
+import { UniversityTariffModal } from './components/UniversityTariffModal';
 import { syncDriverProfileToAdmin, syncTripLedgerToAdmin } from './services/adminIntegrationService';
 import { testFirebaseConnection } from './lib/firebase';
 import { syncDriverProfileToFirebase, syncTripToFirebase, syncTransactionToFirebase } from './services/firebaseSyncService';
@@ -75,6 +76,7 @@ export default function App() {
   const [isPanicModalOpen, setIsPanicModalOpen] = useState(false);
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [completedTripForRating, setCompletedTripForRating] = useState<TripService | null>(null);
+  const [isUniversityModalOpen, setIsUniversityModalOpen] = useState(false);
   
   // Open login/register modal automatically if no user is saved in localStorage
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(() => {
@@ -283,6 +285,7 @@ export default function App() {
         onLogout={handleLogout}
         onOpenThemeModal={() => setIsThemeModalOpen(true)}
         onOpenAdminModal={() => setIsAdminModalOpen(true)}
+        onOpenUniversityModal={() => setIsUniversityModalOpen(true)}
         currentTheme={currentTheme}
       />
 
@@ -441,6 +444,12 @@ export default function App() {
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
         profile={profile}
+      />
+
+      {/* University Student Tariff Notification Modal */}
+      <UniversityTariffModal
+        isOpen={isUniversityModalOpen}
+        onClose={() => setIsUniversityModalOpen(false)}
       />
 
     </div>

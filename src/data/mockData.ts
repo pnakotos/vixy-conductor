@@ -268,6 +268,46 @@ export const PAYMENT_GATEWAYS: PaymentGatewayInfo[] = [
 
 export const SAMPLE_TRIP_OFFERS: TripService[] = [
   {
+    id: 'VX-5020',
+    serviceType: 'taxi',
+    serviceName: 'Vixy Taxi Confort (Tarifa Universitaria)',
+    passenger: {
+      id: 'PAS-9912',
+      name: 'Valentina Ruiz',
+      photoUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=200',
+      rating: 4.98,
+      phone: '+58 412-1122334',
+      totalTrips: 28,
+      isUniversityStudent: true,
+      universityName: 'UCV - Universidad Central de Venezuela',
+      studentCardId: 'EST-UCV-2024-9912',
+    },
+    isUniversityTariff: true,
+    universityTariffDiscountUsd: 3.50,
+    universityTariffNote: 'Tarifa Universitaria 50% Subsidio - Estudiante UCV Acreditado',
+    pickupLocation: {
+      address: 'Ciudad Universitaria de Caracas, Plaza del Rectorado',
+      cityArea: 'UCV, Los Chaguaramos',
+      lat: 10.4901,
+      lng: -66.8872,
+    },
+    dropoffLocation: {
+      address: 'Residencias Estudiantiles Los Ilustres, Av. Los Ilustres',
+      cityArea: 'San Pedro, Caracas',
+      lat: 10.4850,
+      lng: -66.8920,
+    },
+    distanceKm: 2.5,
+    durationMins: 9,
+    fareUsd: 3.50,
+    fareVes: 239.75,
+    commissionFeeUsd: 0.35, // 10%
+    driverNetEarningsUsd: 3.15,
+    paymentMethod: 'Pago Móvil VES',
+    status: 'offered',
+    createdAt: 'Hace 10 seg',
+  },
+  {
     id: 'VX-5021',
     serviceType: 'taxi',
     serviceName: 'Vixy Taxi Confort',
@@ -373,6 +413,12 @@ export const SAMPLE_TRIP_OFFERS: TripService[] = [
 ];
 
 export const FAQ_ITEMS = [
+  {
+    id: 'faq-0',
+    category: 'Tarifa Universitaria',
+    question: '¿Qué es la Tarifa Universitaria Vixy y cómo beneficia a los conductores y estudiantes?',
+    answer: 'Es un programa especial de movilidad estudiantil en Venezuela que otorga un 50% de descuento en la tarifa del viaje a estudiantes universitarios acreditados con carnet activo (UCV, USB, UCAB, LUZ, ULA, UNEFA, etc.). Para el conductor, la comisión Vixy se mantiene protegida al 10% y el viaje incluye el distintivo "🎓 Tarifa Universitaria" en la pantalla de recepción.',
+  },
   {
     id: 'faq-1',
     category: 'Comisiones y Saldo',
