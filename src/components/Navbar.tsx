@@ -17,6 +17,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { AppTheme } from '../data/themes';
+import type { AppConfig } from '../config/appConfig';
 
 interface NavbarProps {
   profile: DriverProfile;
@@ -30,6 +31,7 @@ interface NavbarProps {
   onOpenAdminModal?: () => void;
   onOpenUniversityModal?: () => void;
   currentTheme?: AppTheme;
+  appConfig?: AppConfig;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -44,6 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAdminModal,
   onOpenUniversityModal,
   currentTheme,
+  appConfig,
 }) => {
   const isDetenido = balance < -0.50;
   const gradientClass = currentTheme?.gradientClass || 'from-purple-700 via-purple-600 to-fuchsia-500';
@@ -57,18 +60,22 @@ export const Navbar: React.FC<NavbarProps> = ({
           
           {/* Left Brand Logo */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr ${gradientClass} flex items-center justify-center shadow-md ring-1 ring-white/30`}>
-              <span className="text-sm sm:text-xl font-black italic tracking-tighter text-white">VX</span>
+            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr ${gradientClass} flex items-center justify-center shadow-md ring-1 ring-white/30 overflow-hidden`}>
+              {appConfig?.logoUrl ? (
+                <img src={appConfig.logoUrl} alt={appConfig.appName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm sm:text-xl font-black italic tracking-tighter text-white">VX</span>
+              )}
             </div>
             <div>
               <div className="flex items-center gap-1">
-                <span className="text-sm sm:text-lg font-extrabold tracking-tight text-white">VIXY</span>
+                <span className="text-sm sm:text-lg font-extrabold tracking-tight text-white">{appConfig?.appName || 'VIXY'}</span>
                 <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-800/60">
                   DRIVER
                 </span>
               </div>
               <p className="text-[9px] text-zinc-400 hidden md:block">
-                Venezuela • Placa: <span className="font-mono text-purple-300 font-bold">{profile.plateNumber}</span>
+                {appConfig?.appSubtitle || 'Venezuela • Placa:'} <span className="font-mono text-purple-300 font-bold">{profile.plateNumber}</span>
               </p>
             </div>
           </div>

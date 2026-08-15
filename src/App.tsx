@@ -32,8 +32,12 @@ import { UniversityTariffModal } from './components/UniversityTariffModal';
 import { syncDriverProfileToAdmin, syncTripLedgerToAdmin } from './services/adminIntegrationService';
 import { testFirebaseConnection } from './lib/firebase';
 import { syncDriverProfileToFirebase, syncTripToFirebase, syncTransactionToFirebase } from './services/firebaseSyncService';
+import { loadAppConfig, saveAppConfig } from './config/appConfig';
 
 export default function App() {
+  const [appConfig, setAppConfig] = useState(() => loadAppConfig());
+  const [debugInfoVisible, setDebugInfoVisible] = useState(() => loadAppConfig().debugMode);
+
   // Core App State (Persisted in LocalStorage / Firebase)
   const [profile, setProfile] = useState<DriverProfile>(() => {
     const saved = localStorage.getItem('vixy_driver_profile');
@@ -86,6 +90,9 @@ export default function App() {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
   const isDetenido = balanceUsd < MIN_BALANCE_THRESHOLD;
+  const appId = profile.cedula && profile.cedula !== 'V-00.000.000'
+    ? `vixy-driver-${profile.cedula}`
+    : 'vixy-driver-demo';
 
   // Boot Firebase connection test & initial sync
   useEffect(() => {
@@ -93,7 +100,14 @@ export default function App() {
     if (profile.cedula && profile.cedula !== 'V-00.000.000') {
       syncDriverProfileToFirebase(profile);
     }
-  }, []);
+    if (appConfig.debugMode) {
+      console.info('[Vixy Debug]', {
+        appName: appConfig.appName,
+        logoUrl: appConfig.logoUrl,
+        interconnectionKeyConfigured: Boolean(appConfig.interconnectionKey),
+      });
+    }
+  }, [appConfig.debugMode, appConfig.appName, appConfig.logoUrl, appConfig.interconnectionKey, profile]);
 
   // Auto-enforce "Estado Detenido" if balance drops below -$0.50
   useEffect(() => {
@@ -142,6 +156,62 @@ export default function App() {
     syncDriverProfileToAdmin(updatedProfile); // Transmit to https://vhixy.site/
     syncDriverProfileToFirebase(updatedProfile); // Sync to Firebase Firestore
   };
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const pollCommands = async () => {
+      try {
+        const response = await fetch(`${appConfig.adminBaseUrl}/commands/${encodeURIComponent(appId)}`, {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const commands = Array.isArray(data.commands) ? data.commands : [];
+
+        for (const cmd of commands) {
+          if (!cmd?.command) continue;
+
+          console.info('[Vixy Command]', cmd);
+
+          switch (cmd.command) {
+            case 'ping':
+              break;
+            case 'toggle_online':
+              handleToggleOnline();
+              break;
+            case 'set_tab':
+              if (typeof cmd.payload?.tab === 'string') {
+                setCurrentTab(cmd.payload.tab as TabType);
+              }
+              break;
+            case 'show_debug':
+              setDebugInfoVisible(true);
+              break;
+            case 'hide_debug':
+              setDebugInfoVisible(false);
+              break;
+            default:
+              console.warn('[Vixy Command] Comando no soportado', cmd.command);
+          }
+        }
+      } catch {
+        // La app reintentará en el siguiente ciclo de polling.
+      }
+    };
+
+    pollCommands();
+    const intervalId = window.setInterval(pollCommands, 5000);
+
+    return () => {
+      controller.abort();
+      window.clearInterval(intervalId);
+    };
+  }, [appConfig.adminBaseUrl, appId]);
 
   // Accept incoming trip offer
   const handleAcceptTrip = (trip: TripService) => {
@@ -264,6 +334,12 @@ export default function App() {
     setBalanceUsd(newProfile.hasInitialRecharge ? 10.00 : 0.00);
   };
 
+  const handleConfigChange = (updates: Partial<typeof appConfig>) => {
+    const nextConfig = saveAppConfig(updates);
+    setAppConfig(nextConfig);
+    setDebugInfoVisible(nextConfig.debugMode);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('vixy_driver_profile');
     setProfile(INITIAL_DRIVER_PROFILE);
@@ -272,7 +348,8 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen ${currentTheme.bgClass} flex flex-col font-['Plus_Jakarta_Sans',sans-serif] transition-colors duration-300 selection:bg-purple-600 selection:text-white`}>
+    <div className={`min-h-screen ${currentTheme.bgClass} flex flex-col font-['Plus_Jakarta_Sans',sans-serif] transition-colors duration-300 selection:bg-purple-600 selection:text-white relative overflow-hidden`}>
+      <div className="absolute inset-0 z-0" />
       
       {/* Navbar with Dedicated Navigation Buttons, Theme Switcher & Commission Banner */}
       <Navbar
@@ -287,10 +364,22 @@ export default function App() {
         onOpenAdminModal={() => setIsAdminModalOpen(true)}
         onOpenUniversityModal={() => setIsUniversityModalOpen(true)}
         currentTheme={currentTheme}
+        appConfig={appConfig}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 p-3 sm:p-6 pb-20 sm:pb-6 max-w-7xl w-full mx-auto space-y-4">
+        {debugInfoVisible && (
+          <div className="rounded-2xl border border-cyan-800/70 bg-cyan-950/60 p-3 text-xs text-cyan-100 shadow-lg">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="font-bold">Modo debug activo</span>
+              <span className="font-mono">{appConfig.appName} • {appConfig.appSubtitle}</span>
+            </div>
+            <p className="mt-1 text-cyan-200/90">
+              Branding: {appConfig.logoUrl} • Interconexión: {appConfig.interconnectionKey ? 'configurada' : 'sin configurar'}
+            </p>
+          </div>
+        )}
         
         {/* TAB 1: MAP & TRIP RECEIVING ENGINE */}
         {currentTab === 'map' && (
@@ -444,6 +533,8 @@ export default function App() {
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
         profile={profile}
+        appConfig={appConfig}
+        onConfigChange={handleConfigChange}
       />
 
       {/* University Student Tariff Notification Modal */}

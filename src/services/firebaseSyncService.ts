@@ -3,6 +3,17 @@ import { db, auth } from '../lib/firebase';
 import { DriverProfile, TripService, WalletTransaction } from '../types';
 import { sanitizePayload } from '../utils/security';
 
+const safeWrite = async (path: string, payload: Record<string, unknown>) => {
+  if (!db) return false;
+  try {
+    await setDoc(doc(db, path), payload, { merge: true });
+    return true;
+  } catch (error) {
+    console.warn(`Firebase sync skipped for ${path}:`, error);
+    return false;
+  }
+};
+
 enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -57,8 +68,7 @@ export async function syncDriverProfileToFirebase(profile: DriverProfile): Promi
       city: profile.city,
       updatedAt: new Date().toISOString()
     });
-    await setDoc(doc(db, 'drivers', profile.cedula), cleanProfile, { merge: true });
-    return true;
+    return await safeWrite(`drivers/${profile.cedula}`, cleanProfile);
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
     return false;
@@ -85,8 +95,7 @@ export async function syncTripToFirebase(trip: TripService): Promise<boolean> {
       status: trip.status,
       createdAt: trip.createdAt || new Date().toISOString()
     });
-    await setDoc(doc(db, 'trips', trip.id), cleanTrip, { merge: true });
-    return true;
+    return await safeWrite(`trips/${trip.id}`, cleanTrip);
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
     return false;
@@ -110,8 +119,7 @@ export async function syncTransactionToFirebase(transaction: WalletTransaction):
       status: transaction.status,
       date: transaction.date || new Date().toISOString()
     });
-    await setDoc(doc(db, 'transactions', transaction.id), cleanTx, { merge: true });
-    return true;
+    return await safeWrite(`transactions/${transaction.id}`, cleanTx);
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
     return false;

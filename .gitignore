@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+android/keystore.properties
+android/keystore/*.jks
+android/keystore/*.keystore
+android/.tmp-sdk/
+php-api/.env

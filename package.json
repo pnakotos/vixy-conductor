@@ -1,14 +1,18 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.2",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "android:sync": "npx cap sync android",
+    "android:release:apk": "npm run build && npm run android:sync && ANDROID_JAVA_HOME=${ANDROID_JAVA_HOME:-/usr/local/sdkman/candidates/java/21.0.10-ms} && cd android && JAVA_HOME=$ANDROID_JAVA_HOME PATH=$ANDROID_JAVA_HOME/bin:$PATH VIXY_ANDROID_KEYSTORE_PROPERTIES=/home/codespace/.config/vixy-conductor/android-signing/keystore.properties ./gradlew assembleRelease",
+    "android:release:aab": "npm run build && npm run android:sync && ANDROID_JAVA_HOME=${ANDROID_JAVA_HOME:-/usr/local/sdkman/candidates/java/21.0.10-ms} && cd android && JAVA_HOME=$ANDROID_JAVA_HOME PATH=$ANDROID_JAVA_HOME/bin:$PATH VIXY_ANDROID_KEYSTORE_PROPERTIES=/home/codespace/.config/vixy-conductor/android-signing/keystore.properties ./gradlew bundleRelease",
+    "android:release:play": "npm run android:release:aab"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",

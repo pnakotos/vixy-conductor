@@ -1,26 +1,29 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, FirebaseOptions } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
+const appConfig = firebaseConfig as FirebaseOptions & { firestoreDatabaseId?: string };
+
 // Initialize Firebase App
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app = !getApps().length ? initializeApp(appConfig) : getApp();
 
 // Export auth and database
 export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app, appConfig.firestoreDatabaseId || '(default)');
 
 // Connection test helper
 export async function testFirebaseConnection(): Promise<boolean> {
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-    console.log('Firebase Firestore initialized and connected successfully.');
+    const snapshot = await getDocFromServer(doc(db, 'test', 'connection'));
+    console.log('Firebase Firestore initialized and connected successfully.', snapshot.exists());
     return true;
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn('Firebase offline or check configuration.');
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes('offline') || message.includes('network')) {
+      console.warn('Firebase offline or network issue detected.');
     } else {
-      console.log('Firebase connection test OK:', error);
+      console.warn('Firebase connection test warning:', message);
     }
     return false;
   }

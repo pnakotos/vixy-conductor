@@ -129,7 +129,7 @@ export const WalletView: React.FC<WalletViewProps> = ({
       };
 
       onAddTransaction(newTx);
-      submitRechargeToAdmin(newTx); // Transmit to https://vhixy.site/
+      submitRechargeToAdmin(newTx, profile.cedula); // Transmit to https://vhixy.site/
       setSuccessMsg(`¡Recarga de $${finalUsd.toFixed(2)} USD (~${finalVes.toFixed(2)} BS) procesada e ingresada a tu saldo exitosamente!`);
       
       // Close modal after 2.5s

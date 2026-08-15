@@ -1,0 +1,16 @@
+RewriteEngine On
+
+# Permite llamar /api/health en lugar de /api/health.php (opcional, cómodo para el frontend)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [L]
+
+# Bloquea acceso directo a los archivos de configuración
+<FilesMatch "^(bootstrap|database|auth|cors|env)\.php$">
+  Require all denied
+</FilesMatch>
+
+# Nunca sirvas el .env
+<Files ".env">
+  Require all denied
+</Files>

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Vixy Driver</string>
+    <string name="title_activity_main">Vixy Driver</string>
+    <string name="package_name">com.vixy.driver</string>
+    <string name="custom_url_scheme">com.vixy.driver</string>
+    <string name="store_short_description">Aplicación para conductores de Vixy con gestión de viajes, wallet y perfil.</string>
+    <string name="store_full_description">Vixy Driver es una aplicación móvil para conductores que facilita la gestión de viajes, notificaciones, wallet digital, perfil del usuario y herramientas de soporte. Diseñada para brindar una experiencia ágil y segura para operar en Venezuela.</string>
+    <string name="store_feature_graphics">Gestión de viajes\nWallet digital\nPerfil y soporte</string>
+</resources>

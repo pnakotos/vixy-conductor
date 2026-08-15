@@ -17,6 +17,7 @@ import {
   Check
 } from 'lucide-react';
 import { DriverProfile } from '../types';
+import type { AppConfig } from '../config/appConfig';
 import { 
   testAdminConnection, 
   syncDriverProfileToAdmin, 
@@ -29,16 +30,24 @@ interface AdminInterconnectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   profile: DriverProfile;
+  appConfig?: AppConfig;
+  onConfigChange?: (updates: Partial<AppConfig>) => void;
 }
 
 export const AdminInterconnectionModal: React.FC<AdminInterconnectionModalProps> = ({
   isOpen,
   onClose,
   profile,
+  appConfig,
+  onConfigChange,
 }) => {
   const [serverStatus, setServerStatus] = useState<AdminServerStatus | null>(null);
   const [isPinging, setIsPinging] = useState(false);
-  const [apiKey, setApiKey] = useState((import.meta as any).env?.VIXY_INTERCONNECTION_KEY || 'vhixy_live_sec_89f2a01k3920');
+  const [apiKey, setApiKey] = useState(appConfig?.interconnectionKey || (import.meta as any).env?.VITE_INTERCONNECTION_KEY || '');
+  const [appName, setAppName] = useState(appConfig?.appName || 'Vixy Driver');
+  const [appSubtitle, setAppSubtitle] = useState(appConfig?.appSubtitle || 'Servicios y movilidad en Venezuela');
+  const [logoUrl, setLogoUrl] = useState(appConfig?.logoUrl || '/images/vixy-brand.svg');
+  const [debugMode, setDebugMode] = useState(appConfig?.debugMode ?? false);
   const [showKey, setShowKey] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
   const [logs, setLogs] = useState<AdminSyncLog[]>([]);
@@ -47,10 +56,15 @@ export const AdminInterconnectionModal: React.FC<AdminInterconnectionModalProps>
 
   useEffect(() => {
     if (isOpen) {
+      setApiKey(appConfig?.interconnectionKey || (import.meta as any).env?.VITE_INTERCONNECTION_KEY || '');
+      setAppName(appConfig?.appName || 'Vixy Driver');
+      setAppSubtitle(appConfig?.appSubtitle || 'Servicios y movilidad en Venezuela');
+      setLogoUrl(appConfig?.logoUrl || '/images/vixy-brand.svg');
+      setDebugMode(appConfig?.debugMode ?? false);
       handlePing();
       setLogs(getSyncLogs());
     }
-  }, [isOpen]);
+  }, [isOpen, appConfig]);
 
   if (!isOpen) return null;
 
@@ -82,6 +96,16 @@ export const AdminInterconnectionModal: React.FC<AdminInterconnectionModalProps>
     navigator.clipboard.writeText(text);
     setCopiedKey(true);
     setTimeout(() => setCopiedKey(false), 2000);
+  };
+
+  const handleSaveConfig = () => {
+    onConfigChange?.({
+      appName,
+      appSubtitle,
+      logoUrl,
+      debugMode,
+      interconnectionKey: apiKey,
+    });
   };
 
   return (
@@ -175,6 +199,57 @@ export const AdminInterconnectionModal: React.FC<AdminInterconnectionModalProps>
             )}
           </div>
 
+          {/* Customization and Debug Controls */}
+          <div className="bg-zinc-900/80 border border-purple-900/40 rounded-xl p-3.5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Personalización y Depuración
+                </h4>
+              </div>
+              <button
+                onClick={handleSaveConfig}
+                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-bold text-white"
+              >
+                Guardar
+              </button>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="text-[11px] text-zinc-300">
+                <span className="mb-1 block font-bold">Nombre de la app</span>
+                <input value={appName} onChange={(e) => setAppName(e.target.value)} className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-2.5 py-2 text-white" />
+              </label>
+              <label className="text-[11px] text-zinc-300">
+                <span className="mb-1 block font-bold">Subtítulo</span>
+                <input value={appSubtitle} onChange={(e) => setAppSubtitle(e.target.value)} className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-2.5 py-2 text-white" />
+              </label>
+            </div>
+
+            <label className="text-[11px] text-zinc-300 block">
+              <span className="mb-1 block font-bold">URL del logo</span>
+              <input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-2.5 py-2 text-white" />
+            </label>
+
+            <label className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-[11px] text-zinc-300">
+              <span>Mostrar banner de depuración</span>
+              <input type="checkbox" checked={debugMode} onChange={(e) => setDebugMode(e.target.checked)} className="h-4 w-4 rounded border-zinc-700 bg-zinc-900" />
+            </label>
+
+            <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-2.5">
+              <div className="flex items-center gap-2">
+                <Key className="w-4 h-4 text-purple-400" />
+                <span className="text-[11px] font-bold text-zinc-300">Clave de interconexión</span>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <input type={showKey ? 'text' : 'password'} value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-2 text-xs text-white" />
+                <button onClick={() => setShowKey((prev) => !prev)} className="rounded-lg border border-zinc-700 px-2.5 py-2 text-[11px] text-zinc-300">{showKey ? 'Ocultar' : 'Mostrar'}</button>
+                <button onClick={() => copyToClipboard(apiKey)} className="rounded-lg border border-zinc-700 px-2.5 py-2 text-[11px] text-zinc-300">{copiedKey ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}</button>
+              </div>
+            </div>
+          </div>
+
           {/* Interconnection Security Badge (Token configuration hidden from driver interface) */}
           <div className="bg-zinc-900/80 border border-purple-900/40 rounded-xl p-3.5 space-y-2">
             <div className="flex items-center justify-between">
@@ -185,7 +260,7 @@ export const AdminInterconnectionModal: React.FC<AdminInterconnectionModalProps>
                 </h4>
               </div>
               <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">
-                PRODUCCIÓN ACTIVA
+                DEBUG / PRUEBAS
               </span>
             </div>
             <p className="text-[11px] text-zinc-300 leading-relaxed">

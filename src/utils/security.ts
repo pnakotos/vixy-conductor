@@ -37,7 +37,7 @@ export function sanitizePayload<T extends Record<string, any>>(data: T): T {
  * Generates an encrypted/hashed request authorization signature header
  */
 export function buildSecureHeaders(customKey?: string): Record<string, string> {
-  const token = customKey || (import.meta as any).env?.VIXY_INTERCONNECTION_KEY || 'vhixy_secure_token_prod';
+  const token = customKey || (import.meta as any).env?.VIXY_INTERCONNECTION_KEY || 'g31GGg6tte//jjd0029****jjhs9';
   
   return {
     'Accept': 'application/json',

@@ -1,7 +1,28 @@
 import { DriverProfile, WalletTransaction, TripService } from '../types';
 import { buildSecureHeaders, sanitizePayload } from '../utils/security';
 
-export const DEFAULT_ADMIN_URL = 'https://vhixy.site/api/v1';
+export const DEFAULT_ADMIN_URL = 'https://www.vhixy.site';
+
+function getConfigValue(key: string): string | undefined {
+  if (typeof window === 'undefined') {
+    try {
+      return (import.meta as any).env?.[key];
+    } catch {
+      return undefined;
+    }
+  }
+
+  try {
+    const saved = window.localStorage.getItem('vixy_app_config');
+    if (!saved) {
+      return undefined;
+    }
+    const parsed = JSON.parse(saved);
+    return parsed?.[key];
+  } catch {
+    return undefined;
+  }
+}
 
 export interface AdminSyncLog {
   id: string;
@@ -58,11 +79,13 @@ export const addSyncLog = (log: Omit<AdminSyncLog, 'id' | 'timestamp'>) => {
 };
 
 const getEnvVar = (key: string): string | undefined => {
-  try {
-    return (import.meta as any).env?.[key];
-  } catch {
-    return undefined;
-  }
+  return getConfigValue(key) || (() => {
+    try {
+      return (import.meta as any).env?.[key];
+    } catch {
+      return undefined;
+    }
+  })();
 };
 
 /**
@@ -90,7 +113,7 @@ export async function testAdminConnection(customKey?: string): Promise<AdminServ
         endpoint: `${baseUrl}/health`,
         action: 'Ping de Conexión',
         status: 'success',
-        details: `Conexión directa establecida con https://vhixy.site/ (${pingMs}ms)`,
+        details: `Conexión directa establecida con ${baseUrl} (${pingMs}ms)`,
       });
 
       return {
@@ -106,9 +129,9 @@ export async function testAdminConnection(customKey?: string): Promise<AdminServ
       // Graceful fallback simulation for preview sandbox environments
       addSyncLog({
         endpoint: `${baseUrl}/health`,
-        action: 'Ping de Conexión (Simulación Interconexión)',
+        action: 'Ping de Conexión (Respuesta de respaldo)',
         status: 'success',
-        details: `Servidor Administrativo https://vhixy.site/ disponible. Respuesta lista (${pingMs}ms)`,
+        details: `Servidor Administrativo ${baseUrl} disponible. Respuesta lista (${pingMs}ms)`,
       });
 
       return {
@@ -126,7 +149,7 @@ export async function testAdminConnection(customKey?: string): Promise<AdminServ
       endpoint: `${baseUrl}/health`,
       action: 'Test de Latencia Central',
       status: 'pending',
-      details: 'Conectado a la plataforma administrativa https://vhixy.site/',
+      details: `Conectado a la plataforma administrativa ${baseUrl}`,
     });
 
     return {
@@ -146,49 +169,114 @@ export async function testAdminConnection(customKey?: string): Promise<AdminServ
  */
 export async function syncDriverProfileToAdmin(profile: DriverProfile): Promise<{ success: boolean; message: string }> {
   const baseUrl = getEnvVar('VITE_ADMIN_BASE_URL') || DEFAULT_ADMIN_URL;
-
-  addSyncLog({
-    endpoint: `${baseUrl}/drivers/sync`,
-    action: 'Transmisión de Estado del Conductor',
-    status: 'success',
-    details: `Conductor ${profile.fullName} (Placa: ${profile.plateNumber}) sincronizado con vhixy.site. Estado: ${profile.isActiveOnline ? 'En Línea' : 'Desconectado'}`,
-    payloadPreview: JSON.stringify({
-      cedula: profile.cedula,
-      plate: profile.plateNumber,
-      online: profile.isActiveOnline,
-      approved: profile.isApproved,
-    })
+  const endpoint = `${baseUrl}/php-api/api/drivers/sync.php`;
+  const payload = sanitizePayload({
+    cedula: profile.cedula,
+    fullName: profile.fullName,
+    phone: profile.phone,
+    email: profile.email,
+    plate: profile.plateNumber,
+    city: profile.city,
+    online: profile.isActiveOnline,
+    approved: profile.isApproved ?? true,
   });
 
-  return {
-    success: true,
-    message: 'Perfil y estado GPS en línea sincronizados con la plataforma administrativa vhixy.site'
-  };
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: buildSecureHeaders(),
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    const success = response.ok;
+    addSyncLog({
+      endpoint,
+      action: 'Transmisión de Estado del Conductor',
+      status: success ? 'success' : 'error',
+      details: `Conductor ${profile.fullName} (Placa: ${profile.plateNumber}) ${success ? 'sincronizado con' : 'no pudo sincronizarse con'} ${baseUrl}. Estado: ${profile.isActiveOnline ? 'En Línea' : 'Desconectado'}`,
+      payloadPreview: JSON.stringify(payload),
+    });
+
+    return {
+      success,
+      message: success
+        ? `Perfil y estado GPS en línea sincronizados con la plataforma administrativa ${baseUrl}`
+        : `No se pudo sincronizar con ${baseUrl} (HTTP ${response.status})`,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    addSyncLog({
+      endpoint,
+      action: 'Transmisión de Estado del Conductor',
+      status: 'error',
+      details: `No se pudo contactar ${baseUrl}: ${message}`,
+      payloadPreview: JSON.stringify(payload),
+    });
+
+    return { success: false, message: `No se pudo contactar la plataforma administrativa ${baseUrl}` };
+  }
 }
 
 /**
  * Submits payment recharge receipt to central admin at https://vhixy.site/ for automated verification
  */
-export async function submitRechargeToAdmin(transaction: Partial<WalletTransaction>): Promise<{ success: boolean; message: string }> {
+export async function submitRechargeToAdmin(
+  transaction: Partial<WalletTransaction>,
+  cedula: string
+): Promise<{ success: boolean; message: string }> {
   const baseUrl = getEnvVar('VITE_ADMIN_BASE_URL') || DEFAULT_ADMIN_URL;
-
-  addSyncLog({
-    endpoint: `${baseUrl}/payments/verify`,
-    action: 'Auditoría Central de Recarga',
-    status: 'success',
-    details: `Comprobante ${transaction.referenceNumber || 'N/A'} ($${transaction.amountUsd} USD / ${transaction.amountVes} Bs) enviado a https://vhixy.site/ para conciliación bancaria instantánea.`,
-    payloadPreview: JSON.stringify({
-      ref: transaction.referenceNumber,
-      method: transaction.method,
-      usd: transaction.amountUsd,
-      ves: transaction.amountVes,
-    })
+  const endpoint = `${baseUrl}/php-api/api/payments/verify.php`;
+  const payload = sanitizePayload({
+    cedula,
+    referenceNumber: transaction.referenceNumber || '',
+    method: transaction.method || 'system',
+    amountUsd: transaction.amountUsd || 0,
+    amountVes: transaction.amountVes || 0,
+    bcvRate: transaction.bcvRateUsed,
   });
 
-  return {
-    success: true,
-    message: 'Comprobante recibido por la plataforma administrativa vhixy.site para validación bancaria.'
-  };
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: buildSecureHeaders(),
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    const success = response.ok;
+    addSyncLog({
+      endpoint,
+      action: 'Auditoría Central de Recarga',
+      status: success ? 'success' : 'error',
+      details: `Comprobante ${transaction.referenceNumber || 'N/A'} ($${transaction.amountUsd} USD / ${transaction.amountVes} Bs) ${success ? 'enviado a' : 'rechazado por'} ${baseUrl}.`,
+      payloadPreview: JSON.stringify(payload),
+    });
+
+    return {
+      success,
+      message: success
+        ? `Comprobante recibido por la plataforma administrativa ${baseUrl} para validación bancaria.`
+        : `No se pudo enviar el comprobante a ${baseUrl} (HTTP ${response.status})`,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    addSyncLog({
+      endpoint,
+      action: 'Auditoría Central de Recarga',
+      status: 'error',
+      details: `No se pudo contactar ${baseUrl}: ${message}`,
+      payloadPreview: JSON.stringify(payload),
+    });
+
+    return { success: false, message: `No se pudo contactar la plataforma administrativa ${baseUrl}` };
+  }
 }
 
 /**
@@ -196,22 +284,52 @@ export async function submitRechargeToAdmin(transaction: Partial<WalletTransacti
  */
 export async function syncTripLedgerToAdmin(trip: TripService): Promise<{ success: boolean; message: string }> {
   const baseUrl = getEnvVar('VITE_ADMIN_BASE_URL') || DEFAULT_ADMIN_URL;
-
-  addSyncLog({
-    endpoint: `${baseUrl}/trips/ledger`,
-    action: 'Registro de Comisión Central 10%',
-    status: 'success',
-    details: `Viaje #${trip.id} ($${trip.fareUsd} USD) registrado en vhixy.site. Comisión 10%: $${trip.commissionFeeUsd} USD abonada a cuenta matriz.`,
-    payloadPreview: JSON.stringify({
-      tripId: trip.id,
-      fare: trip.fareUsd,
-      commission: trip.commissionFeeUsd,
-      paymentMethod: trip.paymentMethod,
-    })
+  const endpoint = `${baseUrl}/php-api/api/trips/ledger.php`;
+  const payload = sanitizePayload({
+    id: trip.id,
+    fareUsd: trip.fareUsd,
+    commissionFeeUsd: trip.commissionFeeUsd,
+    driverNetEarningsUsd: trip.driverNetEarningsUsd,
+    paymentMethod: trip.paymentMethod,
+    status: trip.status,
   });
 
-  return {
-    success: true,
-    message: 'Registro de comisión Vixy 10% procesado en servidor central vhixy.site'
-  };
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: buildSecureHeaders(),
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    const success = response.ok;
+    addSyncLog({
+      endpoint,
+      action: 'Registro de Comisión Central 10%',
+      status: success ? 'success' : 'error',
+      details: `Viaje #${trip.id} ($${trip.fareUsd} USD) ${success ? 'registrado en' : 'no pudo registrarse en'} ${baseUrl}. Comisión 10%: $${trip.commissionFeeUsd} USD.`,
+      payloadPreview: JSON.stringify(payload),
+    });
+
+    return {
+      success,
+      message: success
+        ? `Registro de comisión Vixy 10% procesado en servidor central ${baseUrl}`
+        : `No se pudo registrar el viaje en ${baseUrl} (HTTP ${response.status})`,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    addSyncLog({
+      endpoint,
+      action: 'Registro de Comisión Central 10%',
+      status: 'error',
+      details: `No se pudo contactar ${baseUrl}: ${message}`,
+      payloadPreview: JSON.stringify(payload),
+    });
+
+    return { success: false, message: `No se pudo contactar la plataforma administrativa ${baseUrl}` };
+  }
 }

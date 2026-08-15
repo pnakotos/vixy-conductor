@@ -9,6 +9,8 @@
 }
 
 body {
+  position: relative;
+  isolation: isolate;
   padding-top: var(--sat);
   padding-bottom: var(--sab);
   padding-left: var(--sal);
@@ -17,6 +19,37 @@ body {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+  min-height: 100vh;
+  background-color: #050816;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image: url('/images/vixy_brand.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  opacity: 0.92;
+  transform: scale(1.02);
+  filter: saturate(1.05) contrast(1.02);
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(135deg, rgba(2, 6, 23, 0.62) 0%, rgba(2, 6, 23, 0.84) 100%);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+#root {
+  min-height: 100vh;
 }
 
 /* Leaflet dark map tiles override */
